@@ -24,7 +24,9 @@
   "files": [
     "dist/",
     "public/",
-    "config.schema.json"
+    "config.schema.json",
+    "CHANGELOG.md",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
