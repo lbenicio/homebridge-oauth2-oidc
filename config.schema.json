@@ -1,0 +1,114 @@
+{
+  "pluginAlias": "OAuth2OIDC",
+  "pluginType": "platform",
+  "singular": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "description": "A unique name for this OAuth2/OIDC platform instance.",
+        "type": "string",
+        "default": "OAuth2OIDC",
+        "required": true
+      },
+      "providers": {
+        "title": "Identity Providers",
+        "description": "Configure one or more OAuth2 / OIDC identity providers.",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "title": "Provider ID",
+              "description": "A unique identifier for this provider (used by other plugins to reference it).",
+              "type": "string",
+              "required": true
+            },
+            "displayName": {
+              "title": "Display Name",
+              "description": "A human-readable name for this provider.",
+              "type": "string",
+              "required": true
+            },
+            "discoveryUrl": {
+              "title": "OIDC Discovery URL",
+              "description": "The OpenID Connect discovery URL (e.g. https://accounts.google.com/.well-known/openid-configuration). Leave empty to configure endpoints manually.",
+              "type": "string"
+            },
+            "authorizationEndpoint": {
+              "title": "Authorization Endpoint",
+              "description": "OAuth2 authorization endpoint (not needed if discovery URL is provided).",
+              "type": "string"
+            },
+            "tokenEndpoint": {
+              "title": "Token Endpoint",
+              "description": "OAuth2 token endpoint (not needed if discovery URL is provided).",
+              "type": "string"
+            },
+            "userInfoEndpoint": {
+              "title": "UserInfo Endpoint",
+              "description": "OIDC UserInfo endpoint (optional).",
+              "type": "string"
+            },
+            "clientId": {
+              "title": "Client ID",
+              "description": "The OAuth2 client identifier.",
+              "type": "string",
+              "required": true
+            },
+            "clientSecret": {
+              "title": "Client Secret",
+              "description": "The OAuth2 client secret.",
+              "type": "string"
+            },
+            "scopes": {
+              "title": "Scopes",
+              "description": "Default scopes to request (space-separated). Defaults to 'openid profile email'.",
+              "type": "string",
+              "default": "openid profile email"
+            },
+            "redirectPort": {
+              "title": "Callback Port",
+              "description": "Local port for the OAuth2 redirect callback. Defaults to a random available port if not set.",
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 65535
+            },
+            "pkce": {
+              "title": "Use PKCE",
+              "description": "Use PKCE (Proof Key for Code Exchange) for the authorization code flow.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        }
+      },
+      "callbackHost": {
+        "title": "Callback Host",
+        "description": "The hostname or IP address to use in redirect URIs (defaults to localhost).",
+        "type": "string",
+        "default": "localhost"
+      },
+      "tokenRefreshInterval": {
+        "title": "Token Refresh Interval (minutes)",
+        "description": "How often to proactively refresh tokens before they expire. Set to 0 to disable proactive refresh.",
+        "type": "integer",
+        "minimum": 0,
+        "default": 5
+      },
+      "encryptionSecret": {
+        "title": "Encryption Secret",
+        "description": "A secret used to encrypt tokens at rest on disk (AES-256-GCM). Leave empty to store tokens as plain JSON.",
+        "type": "string"
+      },
+      "managementPort": {
+        "title": "Management API Port",
+        "description": "Port for the management HTTP API and UI. Leave empty for a random port.",
+        "type": "integer",
+        "minimum": 1024,
+        "maximum": 65535
+      }
+    }
+  }
+}

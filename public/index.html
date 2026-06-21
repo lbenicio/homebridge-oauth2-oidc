@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth2/OIDC — Homebridge</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b81;
+      --text: #eee;
+      --text-muted: #a0a0b0;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --border: rgba(255,255,255,0.08);
+      --radius: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
+    .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; }
+    .grid { display: grid; gap: 20px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .card-header h2 { font-size: 1.1rem; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-active { background: rgba(46,204,113,0.15); color: var(--success); }
+    .badge-inactive { background: rgba(160,160,176,0.1); color: var(--text-muted); }
+    .badge-oidc { background: rgba(233,69,96,0.12); color: var(--accent); }
+    .meta { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px; }
+    .meta span { margin-right: 16px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      color: var(--text);
+    }
+    button:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    button.danger { color: var(--danger); }
+    button.danger:hover { background: rgba(231,76,60,0.1); border-color: var(--danger); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .device-auth-box {
+      margin-top: 12px;
+      padding: 14px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .device-auth-box .code {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-align: center;
+      margin: 8px 0;
+    }
+    .device-auth-box .uri {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      word-break: break-all;
+    }
+    .device-auth-box .expiry {
+      font-size: 0.72rem;
+      color: var(--warning);
+      text-align: center;
+      margin-top: 6px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { background: var(--success); color: #fff; }
+    .toast-error { background: var(--danger); color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>🔐 OAuth2 / OIDC</h1>
+  <p class="subtitle">Manage identity providers and authentication tokens</p>
+  <div class="grid" id="grid"></div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // The homebridge global is injected by homebridge-config-ui-x
+    const hb = window.homebridge;
+    const grid = document.getElementById('grid');
+    const toastEl = document.getElementById('toast');
+
+    function toast(msg, type) {
+      toastEl.textContent = msg;
+      toastEl.className = 'toast toast-' + type + ' show';
+      setTimeout(() => toastEl.classList.remove('show'), 3000);
+    }
+
+    async function loadProviders() {
+      try {
+        const providers = await hb.request('/providers');
+        renderProviders(providers);
+      } catch (e) {
+        grid.innerHTML = '<div class="card"><p style="color:var(--danger)">Failed to load providers. Is the plugin running?</p></div>';
+      }
+    }
+
+    function renderProviders(providers) {
+      if (!providers || !providers.length) {
+        grid.innerHTML = '<div class="card"><p style="color:var(--text-muted)">No providers configured. Add providers in the plugin settings.</p></div>';
+        return;
+      }
+
+      grid.innerHTML = providers.map(p => {
+        const expiry = p.tokenExpiry
+          ? '<span>⏰ Expires: ' + new Date(p.tokenExpiry).toLocaleString() + '</span>'
+          : '';
+        const scopes = p.scopes ? '<span>📋 ' + p.scopes + '</span>' : '';
+
+        return '<div class="card" id="card-' + p.id + '">' +
+          '<div class="card-header">' +
+            '<h2>' + p.displayName + '</h2>' +
+            '<div>' +
+              (p.hasToken
+                ? '<span class="badge badge-active">Authorized</span>'
+                : '<span class="badge badge-inactive">No Token</span>') +
+              (p.isOIDC ? ' <span class="badge badge-oidc">OIDC</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="meta">' + expiry + scopes + '</div>' +
+          '<div class="actions">' +
+            '<button class="primary" onclick="startAuth(\'' + p.id + '\')">🔗 Authorize</button>' +
+            '<button onclick="startDeviceAuth(\'' + p.id + '\')">📱 Device Auth</button>' +
+            (p.hasToken ? '<button onclick="refreshToken(\'' + p.id + '\')">🔄 Refresh</button>' : '') +
+            (p.hasToken ? '<button class="danger" onclick="revokeToken(\'' + p.id + '\')">🗑 Revoke</button>' : '') +
+          '</div>' +
+          '<div id="device-' + p.id + '"></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function startAuth(providerId) {
+      try {
+        const data = await hb.request('/authorize', { providerId });
+        window.open(data.authUrl, '_blank');
+        toast('Authorization URL opened. Complete the flow in a new window/tab.', 'success');
+        pollAuthStatus(providerId);
+      } catch (e) {
+        toast(e.message || 'Authorization failed', 'error');
+      }
+    }
+
+    async function pollAuthStatus(providerId) {
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const status = await hb.request('/status', { providerId });
+          if (status.hasToken) {
+            toast('Authorization complete!', 'success');
+            loadProviders();
+            return;
+          }
+        } catch {}
+      }
+      loadProviders();
+    }
+
+    async function startDeviceAuth(providerId) {
+      try {
+        const data = await hb.request('/device-authorize', { providerId });
+        const el = document.getElementById('device-' + providerId);
+        const expiresIn = data.expires_in ? Math.round(data.expires_in / 60) : '?';
+        el.innerHTML = '<div class="device-auth-box">' +
+          '<p style="text-align:center;font-size:0.85rem;">Open this URL on any device:</p>' +
+          '<p class="uri">' + data.verification_uri + '</p>' +
+          '<p style="text-align:center;font-size:0.85rem;margin-top:10px;">Enter this code:</p>' +
+          '<p class="code">' + data.user_code + '</p>' +
+          '<p class="expiry">⏳ Expires in ~' + expiresIn + ' min</p>' +
+          '</div>';
+        toast('Device auth started — enter the code on another device.', 'success');
+        pollDeviceAuthStatus(providerId);
+      } catch (e) {
+        toast(e.message || 'Device auth failed', 'error');
+      }
+    }
+
+    async function pollDeviceAuthStatus(providerId) {
+      for (let i = 0; i < 120; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          const status = await hb.request('/device-auth-status', { providerId });
+          if (status.status === 'complete') {
+            toast('Device authorization complete!', 'success');
+            loadProviders();
+            return;
+          }
+          if (status.status === 'expired') {
+            toast('Device authorization expired.', 'error');
+            loadProviders();
+            return;
+          }
+        } catch {}
+      }
+      loadProviders();
+    }
+
+    async function refreshToken(providerId) {
+      try {
+        await hb.request('/refresh', { providerId });
+        toast('Token refreshed!', 'success');
+        loadProviders();
+      } catch (e) {
+        toast(e.message || 'Refresh failed', 'error');
+      }
+    }
+
+    async function revokeToken(providerId) {
+      if (!confirm('Revoke tokens for "' + providerId + '"?')) return;
+      try {
+        await hb.request('/revoke', { providerId });
+        toast('Tokens revoked.', 'success');
+        loadProviders();
+      } catch (e) {
+        toast(e.message || 'Revoke failed', 'error');
+      }
+    }
+
+    // Listen for push events from the server
+    hb.addEventListener('token-updated', () => {
+      loadProviders();
+    });
+
+    loadProviders();
+  </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "name": "homebridge-oauth2-oidc",
+  "displayName": "Homebridge OAuth2 / OIDC",
+  "version": "0.1.0",
+  "description": "A Homebridge platform plugin that provides native OAuth2 and OpenID Connect authentication support, enabling other plugins to authenticate against identity providers using standard flows.",
+  "license": "MIT",
+  "customUi": true,
+  "customUiPath": "dist/ui-server.js",
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "oauth2",
+    "oidc",
+    "openid-connect",
+    "authentication",
+    "authorization"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": ">=1.8.0 || ^2.0.0-beta.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "public/",
+    "config.schema.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@homebridge/plugin-ui-utils": "^2.0.0",
+    "jose": "^5.9.0",
+    "openid-client": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "homebridge": "^2.0.0-beta.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
