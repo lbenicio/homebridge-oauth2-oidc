@@ -16,9 +16,6 @@ export interface ProviderConfig {
   tlsRejectUnauthorized?: boolean;
   allowedGroups?: string[];
   groupsClaim?: string;
-  /** Static callback URL override (default: auto-generated from management port).
-   *  Use this to set a predictable callback like https://homebridge.example.com/plugin/homebridge-oauth2-oidc/callback */
-  callbackUrl?: string;
 }
 
 export interface OAuth2PlatformConfig {

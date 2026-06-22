@@ -183,7 +183,7 @@
 
     async function startAuth(providerId) {
       try {
-        const data = await hb.request('/authorize', { providerId });
+        const data = await hb.request('/authorize', { providerId, origin: window.location.origin });
         window.open(data.authUrl, '_blank');
         toast('Authorization URL opened. Complete the flow in a new window/tab.', 'success');
         pollAuthStatus(providerId);

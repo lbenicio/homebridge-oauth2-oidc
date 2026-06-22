@@ -1,10 +1,9 @@
 /**
- * Token store — persists OAuth2 tokens using the filesystem with
- * optional AES-256-GCM encryption at rest.
+ * Token store — persists OAuth2 tokens encrypted at rest.
  *
- * Each provider's tokens are stored as a JSON file in the plugin's
- * data directory under Homebridge's persist path. When encryption
- * is enabled, the file contents are encrypted before writing.
+ * Each provider's tokens are stored as an AES-256-GCM encrypted file
+ * in the plugin's data directory under Homebridge's persist path.
+ * A random encryption key is auto-generated on first use.
  */
 
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
@@ -17,13 +16,11 @@ const TOKEN_FILE_PREFIX = 'token_';
 
 export class TokenStore {
   private dataDir: string;
-  private encryption: TokenEncryption | null = null;
+  private encryption: TokenEncryption;
 
-  constructor(baseStoragePath: string, encryptionSecret?: string) {
+  constructor(baseStoragePath: string) {
     this.dataDir = join(baseStoragePath, PLUGIN_DATA_DIR);
-    if (encryptionSecret) {
-      this.encryption = new TokenEncryption(encryptionSecret);
-    }
+    this.encryption = new TokenEncryption(this.dataDir);
   }
 
   private async ensureDataDir(): Promise<void> {
@@ -34,43 +31,26 @@ export class TokenStore {
     return join(this.dataDir, `${TOKEN_FILE_PREFIX}${providerId}.json`);
   }
 
-  /** Retrieve a stored token set for a provider */
   async get(providerId: string): Promise<TokenSet | null> {
     try {
       const raw = await readFile(this.filePath(providerId), 'utf-8');
-
-      if (this.encryption) {
-        return this.encryption.decrypt<TokenSet>(raw);
-      }
-
-      return JSON.parse(raw) as TokenSet;
+      return this.encryption.decrypt<TokenSet>(raw);
     } catch {
       return null;
     }
   }
 
-  /** Persist a token set for a provider */
   async set(providerId: string, tokenSet: TokenSet): Promise<void> {
     await this.ensureDataDir();
-
-    const data = this.encryption
-      ? this.encryption.encrypt(tokenSet)
-      : JSON.stringify(tokenSet, null, 2);
-
+    const data = this.encryption.encrypt(tokenSet);
     await writeFile(this.filePath(providerId), data, 'utf-8');
   }
 
-  /** Delete stored tokens for a provider */
   async delete(providerId: string): Promise<void> {
     try {
       await unlink(this.filePath(providerId));
     } catch {
       // File doesn't exist — nothing to delete
     }
-  }
-
-  /** Check if encryption is enabled */
-  get isEncrypted(): boolean {
-    return this.encryption !== null;
   }
 }

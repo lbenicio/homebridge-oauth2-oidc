@@ -33,22 +33,7 @@
             },
             "discoveryUrl": {
               "title": "OIDC Discovery URL",
-              "description": "The OpenID Connect discovery URL (e.g. https://accounts.google.com/.well-known/openid-configuration). Leave empty to configure endpoints manually.",
-              "type": "string"
-            },
-            "authorizationEndpoint": {
-              "title": "Authorization Endpoint",
-              "description": "OAuth2 authorization endpoint (not needed if discovery URL is provided).",
-              "type": "string"
-            },
-            "tokenEndpoint": {
-              "title": "Token Endpoint",
-              "description": "OAuth2 token endpoint (not needed if discovery URL is provided).",
-              "type": "string"
-            },
-            "userInfoEndpoint": {
-              "title": "UserInfo Endpoint",
-              "description": "OIDC UserInfo endpoint (optional).",
+              "description": "The OpenID Connect discovery URL (e.g. https://id.lan/.well-known/openid-configuration). Endpoints are resolved automatically.",
               "type": "string"
             },
             "clientId": {
@@ -67,13 +52,6 @@
               "description": "Default scopes to request (space-separated). Defaults to 'openid profile email'.",
               "type": "string",
               "default": "openid profile email"
-            },
-            "redirectPort": {
-              "title": "Callback Port",
-              "description": "Local port for the OAuth2 redirect callback. Defaults to a random available port if not set.",
-              "type": "integer",
-              "minimum": 1024,
-              "maximum": 65535
             },
             "pkce": {
               "title": "Use PKCE",
@@ -98,45 +76,9 @@
               "description": "The OIDC claim that contains group memberships (default: 'groups').",
               "type": "string",
               "default": "groups"
-            },
-            "callbackUrl": {
-              "title": "Callback URL",
-              "description": "Static callback URL for this provider. Use this to set a predictable redirect URI like https://homebridge.example.com/plugin/homebridge-oauth2-oidc/callback. Leave empty for auto-generated localhost URL.",
-              "type": "string"
             }
           }
         }
-      },
-      "callbackHost": {
-        "title": "Callback Host",
-        "description": "The hostname or IP address to use in redirect URIs (defaults to localhost).",
-        "type": "string",
-        "default": "localhost"
-      },
-      "tokenRefreshInterval": {
-        "title": "Token Refresh Interval (minutes)",
-        "description": "How often to proactively refresh tokens before they expire. Set to 0 to disable proactive refresh.",
-        "type": "integer",
-        "minimum": 0,
-        "default": 5
-      },
-      "encryptionSecret": {
-        "title": "Encryption Secret",
-        "description": "A secret used to encrypt tokens at rest on disk (AES-256-GCM). Leave empty to store tokens as plain JSON.",
-        "type": "string"
-      },
-      "managementPort": {
-        "title": "Management API Port",
-        "description": "Port for the management HTTP API and UI. Leave empty for a random port.",
-        "type": "integer",
-        "minimum": 1024,
-        "maximum": 65535
-      },
-      "managementBindAddress": {
-        "title": "Management Bind Address",
-        "description": "IP address to bind the management server to. Defaults to 127.0.0.1 (localhost only). Set to 0.0.0.0 if using a reverse proxy on another host.",
-        "type": "string",
-        "default": "127.0.0.1"
       }
     }
   }

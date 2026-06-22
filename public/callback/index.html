@@ -80,7 +80,7 @@
           throw new Error('Homebridge bridge not available — are you accessing this through the Homebridge UI?');
         }
 
-        await window.homebridge.request('/exchange-code', { code, state: state || '' });
+        await window.homebridge.request('/exchange-code', { code, state: state || '', origin: window.location.origin });
         loading.style.display = 'none';
         result.style.display = 'block';
         result.innerHTML = '<h1 class="success">✓ Authorization Complete</h1><p>You may close this window.</p>';
