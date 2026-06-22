@@ -80,6 +80,24 @@
               "description": "Use PKCE (Proof Key for Code Exchange) for the authorization code flow.",
               "type": "boolean",
               "default": true
+            },
+            "tlsRejectUnauthorized": {
+              "title": "Skip TLS Verification",
+              "description": "Skip TLS certificate validation (use for self-signed/internal certificates, e.g. .lan domains).",
+              "type": "boolean",
+              "default": false
+            },
+            "allowedGroups": {
+              "title": "Allowed Groups",
+              "description": "Restrict access to users belonging to at least one of these OIDC groups. Leave empty to allow all users.",
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "groupsClaim": {
+              "title": "Groups Claim",
+              "description": "The OIDC claim that contains group memberships (default: 'groups').",
+              "type": "string",
+              "default": "groups"
             }
           }
         }
@@ -108,6 +126,12 @@
         "type": "integer",
         "minimum": 1024,
         "maximum": 65535
+      },
+      "managementBindAddress": {
+        "title": "Management Bind Address",
+        "description": "IP address to bind the management server to. Defaults to 127.0.0.1 (localhost only). Set to 0.0.0.0 if using a reverse proxy on another host.",
+        "type": "string",
+        "default": "127.0.0.1"
       }
     }
   }

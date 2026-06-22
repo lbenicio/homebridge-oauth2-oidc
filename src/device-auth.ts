@@ -17,21 +17,16 @@ import type {
   DeviceAuthResponse,
   DeviceAuthPollResult,
 } from './types';
+import { fetchWithTLS } from './tls-fetch';
 
-/** Default polling interval in milliseconds */
 const DEFAULT_POLL_INTERVAL = 5_000;
-
-/** Default timeout in milliseconds (10 minutes) */
 const DEFAULT_TIMEOUT = 600_000;
 
 /**
  * Request a device authorization code from the provider.
- * The provider's device_authorization_endpoint is typically the same
- * as the token endpoint under a different path, or uses a dedicated
- * `device_authorization_endpoint` from OIDC discovery metadata.
  */
 export async function requestDeviceCode(
-  config: Pick<ProviderConfig, 'clientId' | 'clientSecret' | 'scopes'>,
+  config: Pick<ProviderConfig, 'clientId' | 'clientSecret' | 'scopes' | 'tlsRejectUnauthorized'>,
   deviceEndpoint: string,
   audience?: string
 ): Promise<DeviceAuthResponse> {
@@ -56,11 +51,11 @@ export async function requestDeviceCode(
     headers['Authorization'] = `Basic ${credentials}`;
   }
 
-  const response = await fetch(deviceEndpoint, {
+  const response = await fetchWithTLS(deviceEndpoint, {
     method: 'POST',
     headers,
     body: body.toString(),
-  });
+  }, config.tlsRejectUnauthorized ?? true);
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
@@ -92,14 +87,16 @@ export async function pollDeviceToken(
     interval?: number;
     timeoutMs?: number;
     onStatus?: (status: DeviceAuthPollResult) => void;
+    tlsRejectUnauthorized?: boolean;
   }
 ): Promise<TokenSet> {
   const interval = options?.interval ?? DEFAULT_POLL_INTERVAL;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT;
+  const tlsRejectUnauthorized = options?.tlsRejectUnauthorized ?? true;
   const startTime = Date.now();
 
   while (Date.now() - startTime < timeoutMs) {
-    const result = await pollOnce(deviceCode, clientId, clientSecret, tokenEndpoint);
+    const result = await pollOnce(deviceCode, clientId, clientSecret, tokenEndpoint, tlsRejectUnauthorized);
 
     options?.onStatus?.(result);
 
@@ -111,7 +108,6 @@ export async function pollDeviceToken(
       throw new Error(`Device authorization failed: ${result.error} — ${result.errorDescription ?? ''}`);
     }
 
-    // If server says slow_down, increase the interval
     const delay = result.error === 'slow_down' ? interval * 2 : interval;
     await sleep(delay);
   }
@@ -123,7 +119,8 @@ async function pollOnce(
   deviceCode: string,
   clientId: string,
   clientSecret: string | undefined,
-  tokenEndpoint: string
+  tokenEndpoint: string,
+  tlsRejectUnauthorized = true
 ): Promise<DeviceAuthPollResult> {
   const body = new URLSearchParams({
     grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
@@ -143,11 +140,11 @@ async function pollOnce(
     headers['Authorization'] = `Basic ${credentials}`;
   }
 
-  const response = await fetch(tokenEndpoint, {
+  const response = await fetchWithTLS(tokenEndpoint, {
     method: 'POST',
     headers,
     body: body.toString(),
-  });
+  }, tlsRejectUnauthorized);
 
   const data = (await response.json()) as Record<string, unknown>;
 
