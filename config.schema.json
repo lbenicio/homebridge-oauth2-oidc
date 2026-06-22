@@ -98,6 +98,11 @@
               "description": "The OIDC claim that contains group memberships (default: 'groups').",
               "type": "string",
               "default": "groups"
+            },
+            "callbackUrl": {
+              "title": "Callback URL",
+              "description": "Static callback URL for this provider. Use this to set a predictable redirect URI like https://homebridge.example.com/plugin/homebridge-oauth2-oidc/callback. Leave empty for auto-generated localhost URL.",
+              "type": "string"
             }
           }
         }

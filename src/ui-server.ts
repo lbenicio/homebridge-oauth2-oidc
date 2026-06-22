@@ -101,6 +101,20 @@ class OAuth2OIDCUIServer extends HomebridgePluginUiServer {
       });
       return res.json();
     });
+
+    // POST /api/exchange-code — Exchange authorization code for tokens
+    this.onRequest('/exchange-code', async (payload: { code: string; state: string }) => {
+      const res = await fetch(`${baseUrl}/api/exchange-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: payload.code, state: payload.state }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Exchange failed' }));
+        throw new Error((err as { error?: string }).error || 'Exchange failed');
+      }
+      return res.json();
+    });
   }
 }
 
