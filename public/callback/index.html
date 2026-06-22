@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth2 Callback — Homebridge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #16213e;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 32px 40px;
+      text-align: center;
+      max-width: 480px;
+      width: 90%;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #e94560;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .success { color: #2ecc71; font-size: 1rem; font-weight: 600; }
+    .error { color: #e74c3c; font-size: 0.9rem; margin-top: 8px; }
+    h1 { font-size: 1.2rem; margin-bottom: 8px; }
+    p { color: #a0a0b0; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="loading">
+      <div class="spinner"></div>
+      <h1>Completing Authorization</h1>
+      <p>Exchanging authorization code for tokens...</p>
+    </div>
+    <div id="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+      const error = params.get('error');
+      const errorDesc = params.get('error_description');
+
+      const loading = document.getElementById('loading');
+      const result = document.getElementById('result');
+
+      if (error) {
+        loading.style.display = 'none';
+        result.style.display = 'block';
+        result.innerHTML = '<h1 class="error">Authorization Failed</h1><p class="error">' + (errorDesc || error) + '</p>';
+        return;
+      }
+
+      if (!code) {
+        loading.style.display = 'none';
+        result.style.display = 'block';
+        result.innerHTML = '<h1 class="error">Missing Code</h1><p class="error">No authorization code was received.</p>';
+        return;
+      }
+
+      try {
+        if (!window.homebridge || !window.homebridge.request) {
+          throw new Error('Homebridge bridge not available — are you accessing this through the Homebridge UI?');
+        }
+
+        await window.homebridge.request('/exchange-code', { code, state: state || '' });
+        loading.style.display = 'none';
+        result.style.display = 'block';
+        result.innerHTML = '<h1 class="success">✓ Authorization Complete</h1><p>You may close this window.</p>';
+      } catch (err) {
+        loading.style.display = 'none';
+        result.style.display = 'block';
+        result.innerHTML = '<h1 class="error">Exchange Failed</h1><p class="error">' + (err.message || 'Unknown error') + '</p>';
+      }
+    })();
+  </script>
+</body>
+</html>
