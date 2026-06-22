@@ -11,10 +11,14 @@ import type {
   OIDCDiscoveryMetadata,
 } from './types';
 import { OAuth2Client } from './oauth2-client';
+import { fetchWithTLS } from './tls-fetch';
 
 /** Fetch and parse OIDC discovery metadata from a .well-known URL */
-export async function fetchDiscoveryMetadata(discoveryUrl: string): Promise<OIDCDiscoveryMetadata> {
-  const response = await fetch(discoveryUrl);
+export async function fetchDiscoveryMetadata(
+  discoveryUrl: string,
+  tlsRejectUnauthorized = true
+): Promise<OIDCDiscoveryMetadata> {
+  const response = await fetchWithTLS(discoveryUrl, undefined, tlsRejectUnauthorized);
   if (!response.ok) {
     throw new Error(`Failed to fetch OIDC discovery metadata from ${discoveryUrl}: ${response.status}`);
   }

@@ -17,6 +17,7 @@ import type {
 } from './types';
 import { startCallbackServer, findAvailablePort } from './callback-server';
 import { requestDeviceCode, pollDeviceToken } from './device-auth';
+import { fetchWithTLS } from './tls-fetch';
 
 /**
  * Generate a PKCE code verifier and challenge.
@@ -44,6 +45,9 @@ interface ClientConfig {
   redirectUri: string;
   pkce: boolean;
   defaultScopes: string;
+  tlsRejectUnauthorized: boolean;
+  allowedGroups?: string[];
+  groupsClaim: string;
 }
 
 export class OAuth2Client {
@@ -61,6 +65,9 @@ export class OAuth2Client {
       redirectUri,
       pkce: providerConfig.pkce,
       defaultScopes: providerConfig.scopes || 'openid profile email',
+      tlsRejectUnauthorized: providerConfig.tlsRejectUnauthorized ?? true,
+      allowedGroups: providerConfig.allowedGroups,
+      groupsClaim: providerConfig.groupsClaim || 'groups',
     };
   }
 
@@ -203,13 +210,13 @@ export class OAuth2Client {
     }
 
     const url = this.config.tokenEndpoint.replace(/\/token$/, '/revoke');
-    const response = await fetch(url, {
+    const response = await fetchWithTLS(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: body.toString(),
-    });
+    }, this.config.tlsRejectUnauthorized);
 
     if (!response.ok && response.status !== 200) {
       const text = await response.text().catch(() => '');
@@ -232,11 +239,11 @@ export class OAuth2Client {
       headers['Authorization'] = `Basic ${credentials}`;
     }
 
-    const response = await fetch(this.config.tokenEndpoint, {
+    const response = await fetchWithTLS(this.config.tokenEndpoint, {
       method: 'POST',
       headers,
       body: body.toString(),
-    });
+    }, this.config.tlsRejectUnauthorized);
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
@@ -336,16 +343,44 @@ export class OAuth2Client {
       throw new Error('No UserInfo endpoint configured for this provider');
     }
 
-    const response = await fetch(this.config.userInfoEndpoint, {
+    const response = await fetchWithTLS(this.config.userInfoEndpoint, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-    });
+    }, this.config.tlsRejectUnauthorized);
 
     if (!response.ok) {
       throw new Error(`UserInfo request failed: ${response.status}`);
     }
 
     return response.json() as Promise<Record<string, unknown>>;
+  }
+
+  async getUserGroups(accessToken: string, idToken?: string): Promise<string[] | null> {
+    let claims: Record<string, unknown> | null = null;
+    if (this.config.userInfoEndpoint) {
+      try { claims = await this.fetchUserInfo(accessToken); } catch { /* fall through */ }
+    }
+    if (!claims && idToken) {
+      try {
+        const parts = idToken.split('.');
+        if (parts.length === 3) claims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+      } catch { /* ignore */ }
+    }
+    if (!claims) return null;
+    const raw = claims[this.config.groupsClaim];
+    if (!raw) return null;
+    if (Array.isArray(raw)) return raw.map(String);
+    if (typeof raw === 'string') return raw.split(',').map(g => g.trim());
+    return null;
+  }
+
+  async isUserAuthorized(accessToken: string, idToken?: string): Promise<{ authorized: boolean; groups: string[] | null }> {
+    const allowed = this.config.allowedGroups;
+    if (!allowed?.length) return { authorized: true, groups: null };
+    const groups = await this.getUserGroups(accessToken, idToken);
+    if (!groups) return { authorized: false, groups: null };
+    const lower = allowed.map(g => g.toLowerCase());
+    return { authorized: groups.some(g => lower.includes(g.toLowerCase())), groups };
   }
 }

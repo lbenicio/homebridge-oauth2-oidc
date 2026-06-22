@@ -29,7 +29,6 @@ export type {
   AuthorizedPayload,
   ErrorPayload,
   OIDCDiscoveryMetadata,
-  DeviceAuthRequest,
   DeviceAuthResponse,
   DeviceAuthPollResult,
   ProviderInfo,

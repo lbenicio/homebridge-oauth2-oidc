@@ -13,10 +13,9 @@
 
 import type {
   ProviderConfig,
-  DeviceAuthRequest,
+  TokenSet,
   DeviceAuthResponse,
   DeviceAuthPollResult,
-  TokenSet,
 } from './types';
 
 /** Default polling interval in milliseconds */

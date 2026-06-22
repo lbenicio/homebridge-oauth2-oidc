@@ -6,37 +6,17 @@
   "license": "MIT",
   "customUi": true,
   "customUiPath": "dist/ui-server.js",
-  "keywords": [
-    "homebridge-plugin",
-    "homebridge",
-    "oauth2",
-    "oidc",
-    "openid-connect",
-    "authentication",
-    "authorization"
-  ],
-  "engines": {
-    "node": ">=18.0.0",
-    "homebridge": ">=1.8.0 || ^2.0.0-beta.0"
-  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist/",
-    "public/",
-    "config.schema.json",
-    "CHANGELOG.md",
-    "README.md"
-  ],
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "clean": "rimraf dist",
-    "prebuild": "npm run clean",
-    "prepublishOnly": "npm run build",
-    "lint": "eslint src/",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "ts:build": "tsc",
+    "ts:watch": "tsc --watch",
+    "clean:cache": "rimraf dist",
+    "fmt:lint": "eslint src/",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "prebuild": "npm run clean:cache",
+    "prepublishOnly": "npm run ts:build"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.0.0",
@@ -50,5 +30,29 @@
     "rimraf": "^6.0.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.9"
+  },
+  "files": [
+    "dist/",
+    "public/",
+    "config.schema.json",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": ">=1.8.0 || ^2.0.0-beta.0"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "oauth2",
+    "oidc",
+    "openid-connect",
+    "authentication",
+    "authorization"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lbenicio/homebridge-oauth2-oidc"
   }
 }
