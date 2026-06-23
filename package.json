@@ -1,7 +1,7 @@
 {
   "name": "homebridge-oauth2-oidc",
   "displayName": "Homebridge OAuth2 / OIDC",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "A Homebridge platform plugin that provides native OAuth2 and OpenID Connect authentication support, enabling other plugins to authenticate against identity providers using standard flows.",
   "license": "MIT",
   "customUi": true,
