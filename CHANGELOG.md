@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-06-22
+
+### Fixed
+
+- Git rebase merge conflicts resolved across all source files — history is now linear and clean
+- `package.json` restored to valid JSON after rebase corruption
+- Removed stale `DeviceAuthRequest` import from `device-auth.ts` and `index.ts`
+- Added missing `fetchWithTLS` import to `oidc-client.ts`
+- Added missing `tlsRejectUnauthorized`, `allowedGroups`, and `groupsClaim` fields to `ClientConfig` interface
+
+### Changed
+
+- `TokenStore` now always uses encryption — removed optional `encryptionSecret` parameter from constructor
+- `TokenEncryption` constructor takes `dataDir` path instead of user-provided secret
+- `ProviderConfig` cleaned up — removed `redirectPort`, `callbackUrl`; added `tlsRejectUnauthorized`, `allowedGroups`, `groupsClaim`
+- `OAuth2PlatformConfig` cleaned up — removed `callbackHost`, `tokenRefreshInterval`, `encryptionSecret`, `managementPort`, `managementBindAddress`
+
+[0.1.4]: https://github.com/lbenicio/homebridge-oauth2-oidc/releases/tag/v0.1.4
+
 ## [0.1.3] — 2026-06-22
 
 ### Changed
