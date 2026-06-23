@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.1.4]: https://github.com/lbenicio/homebridge-oauth2-oidc/releases/tag/v0.1.4
 
+## [0.1.5] — 2026-06-22
+
+### Fixed
+
+- **ENOENT crash on first run** — `loadOrCreateKey` now creates the data directory before writing the encryption key file, preventing crash when the plugin storage directory doesn't exist yet
+
+[0.1.5]: https://github.com/lbenicio/homebridge-oauth2-oidc/releases/tag/v0.1.5
+
 ## [0.1.3] — 2026-06-22
 
 ### Changed

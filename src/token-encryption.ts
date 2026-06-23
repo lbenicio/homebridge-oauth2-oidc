@@ -15,6 +15,7 @@ import {
   readFileSync,
   writeFileSync,
   existsSync,
+  mkdirSync,
 } from 'node:fs';
 import { join } from 'node:path';
 
@@ -31,6 +32,11 @@ export function loadOrCreateKey(dataDir: string): Buffer {
 
   if (existsSync(keyPath)) {
     return Buffer.from(readFileSync(keyPath));
+  }
+
+  // Ensure the directory exists
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
   }
 
   const key = randomBytes(32);
