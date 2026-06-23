@@ -37,6 +37,8 @@ function httpsRequest(urlStr: string, init?: RequestInit): Promise<TLSResponse> 
   const headers = init?.headers as Record<string, string> | undefined;
   const body = init?.body as string | undefined;
 
+  console.log(`[OAuth2OIDC] TLS-skip request: ${method} ${urlStr}`);
+
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
@@ -55,7 +57,10 @@ function httpsRequest(urlStr: string, init?: RequestInit): Promise<TLSResponse> 
         } catch (err) { reject(err); }
       }
     );
-    req.on('error', reject);
+    req.on('error', (err) => {
+      console.error(`[OAuth2OIDC] TLS request failed for ${parsedUrl.hostname}:`, err.message);
+      reject(err);
+    });
     req.on('timeout', () => { req.destroy(); reject(new Error(`Request timed out: ${urlStr}`)); });
     if (body) req.write(body);
     req.end();

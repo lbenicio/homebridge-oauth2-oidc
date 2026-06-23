@@ -87,12 +87,17 @@ export class OAuth2OIDCPlatform implements IndependentPlatformPlugin {
     const redirectUri = 'http://localhost';
 
     if (cfg.discoveryUrl) {
-      const metadata = await fetchDiscoveryMetadata(
-        cfg.discoveryUrl,
-        cfg.tlsRejectUnauthorized ?? true
-      );
-      this.log.info(`OIDC discovery complete for "${cfg.id}" — issuer: ${metadata.issuer}`);
-      return new OIDCClient(cfg, redirectUri, metadata);
+      // Normalize: accept "false" string or boolean false
+      const skipTLS = cfg.tlsRejectUnauthorized === false || (cfg.tlsRejectUnauthorized as unknown) === 'false';
+      this.log.info(`Discovering OIDC metadata from ${cfg.discoveryUrl} (TLS verify: ${!skipTLS})`);
+      try {
+        const metadata = await fetchDiscoveryMetadata(cfg.discoveryUrl, !skipTLS);
+        this.log.info(`OIDC discovery complete for "${cfg.id}" — issuer: ${metadata.issuer}`);
+        return new OIDCClient(cfg, redirectUri, metadata);
+      } catch (err) {
+        this.log.error(`OIDC discovery failed for "${cfg.id}":`, (err as Error).message);
+        throw err;
+      }
     }
 
     if (!cfg.authorizationEndpoint || !cfg.tokenEndpoint) {

@@ -32,6 +32,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.1.5]: https://github.com/lbenicio/homebridge-oauth2-oidc/releases/tag/v0.1.5
 
+## [0.1.6] — 2026-06-22
+
+### Added
+
+- Debug logging for OIDC discovery — shows the discovery URL and whether TLS verification is enabled
+- Debug logging for TLS-skip HTTP requests — shows the actual error when a request fails
+
+### Changed
+
+- `tlsRejectUnauthorized` now accepts both boolean `false` and string `"false"` values from config
+- OIDC discovery errors are now logged with full details instead of generic "fetch failed"
+
+[0.1.6]: https://github.com/lbenicio/homebridge-oauth2-oidc/releases/tag/v0.1.6
+
 ## [0.1.3] — 2026-06-22
 
 ### Changed
